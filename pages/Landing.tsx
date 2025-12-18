@@ -17,8 +17,8 @@ const Landing = () => {
         <div className="flex items-center gap-2">
           {/* NOVA LOGO NAVBAR */}
           <img
-            src="/assets/logo-1200.png"
-            alt="BidFlow"
+            src="/assets/LOGO-FR.webp"
+            alt="FR"
             className="h-16 object-contain"
           />
         </div>

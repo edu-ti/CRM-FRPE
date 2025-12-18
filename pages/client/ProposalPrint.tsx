@@ -357,7 +357,7 @@ const ProposalPrint = () => {
               {/* Use caminho absoluto para ativos se necessário ou mantenha relativo se funcionar na sua configuração. Ficheiros anteriores usavam /assets/... */}
               <div className="w-24 h-24 relative">
                 <img
-                  src="/assets/logo-bidflow.png"
+                  src="/assets/LOGO-FR.webp"
                   className="object-contain w-full h-full"
                   alt="Logótipo"
                 />
