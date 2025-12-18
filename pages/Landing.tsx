@@ -40,7 +40,7 @@ const Landing: React.FC = () => {
 
           {/* Acessar Painel */}
           <Link
-            to="/painel"
+            to="/login"
             className="flex flex-col items-center gap-4 hover:bg-white/10 px-6 py-4 rounded-lg transition-transform transform hover:scale-105"
           >
             <div className="text-5xl">
