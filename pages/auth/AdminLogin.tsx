@@ -52,16 +52,16 @@ const AdminLogin: React.FC = () => {
         </Link>
 
         <div className="text-center mb-8">
-          <div className="bg-white/10 p-4 rounded-xl mb-4 inline-block">
+          <div className="bg-green/10 p-4 rounded-xl mb-4 inline-block">
             <img
-              src="/assets/logo-1200.png"
-              alt="BidFlow Master"
-              className="h-12 object-contain"
+              src="/assets/LOGO-FR.webp"
+              alt="FR Produtos Médicos"
+              className="h-16 mx-auto mb-4 object-contain"
             />
           </div>
           <h1 className="text-2xl font-bold text-white">Acesso Master</h1>
           <p className="text-gray-400 mt-1">
-            Área restrita para equipe BidFlow
+            Área restrita para equipe FR
           </p>
         </div>
 

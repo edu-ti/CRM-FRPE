@@ -313,20 +313,24 @@ const Layout: React.FC<LayoutProps> = ({
             className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold ${
               type === "admin"
                 ? "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
-                : "bg-indigo-600"
+                : "bg-[#ffffff]"
             }`}
           >
-            {type === "admin" ? "M" : "B"}
+            {type === "admin" ? "M" : " "}
           </div>
           <span className="text-xl font-bold text-gray-800">
             {type === "admin" ? (
               <img
-                src="/assets/logo-1200.png"
-                alt="BidFlow Master"
-                className="h-8 object-contain"
+                src="/assets/LOGO-FR.webp"
+                alt="FR Produtos Médicos"
+                className="h-28 object-contain"
               />
             ) : (
-              "BidFlow"
+              <img
+                src="/assets/LOGO-FR.webp"
+                alt="FR Produtos Médicos"
+                className="h-28 object-contain"
+              />
             )}
           </span>
         </div>

@@ -48,14 +48,14 @@ const ClientLogin: React.FC = () => {
 
         <div className="text-center mb-8">
           <img
-            src="/assets/logo-1200.png"
-            alt="BidFlow"
+            src="/assets/LOGO-FR.webp"
+            alt="FR Produtos Médicos"
             className="h-16 mx-auto mb-4 object-contain"
           />
           <h1 className="text-2xl font-bold text-gray-900">
             Bem-vindo de volta
           </h1>
-          <p className="text-gray-500 mt-1">Acesse sua conta BidFlow</p>
+          <p className="text-gray-500 mt-1">Acesse sua conta FR</p>
         </div>
 
         {error && (
