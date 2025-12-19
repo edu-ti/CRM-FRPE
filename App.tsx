@@ -313,7 +313,7 @@ const Layout: React.FC<LayoutProps> = ({
             className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold ${
               type === "admin"
                 ? "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
-                : "bg-[#ffffff]"
+                : "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
             }`}
           >
             {type === "admin" ? "M" : " "}
@@ -323,13 +323,13 @@ const Layout: React.FC<LayoutProps> = ({
               <img
                 src="/assets/LOGO-FR.webp"
                 alt="FR Produtos Médicos"
-                className="h-28 object-contain"
+                className="h-28 object-contain dark:brightness-0 dark:invert"
               />
             ) : (
               <img
                 src="/assets/LOGO-FR.webp"
                 alt="FR Produtos Médicos"
-                className="h-28 object-contain"
+                className="h-28 object-contain dark:brightness-0 dark:invert"
               />
             )}
           </span>
