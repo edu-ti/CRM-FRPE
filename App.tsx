@@ -80,7 +80,29 @@ import Settings from "./pages/client/Settings";
 import Proposals from "./pages/client/Proposals";
 import Catalog from "./pages/client/Catalog";
 import ProposalPrint from "./pages/client/ProposalPrint";
-import InventoryPlaceholder from "./pages/client/inventory/InventoryPlaceholder";
+// Inventory Pages
+import MovementsList from "./pages/client/inventory/MovementsList";
+import NewMovement from "./pages/client/inventory/NewMovement";
+import MovementCategories from "./pages/client/inventory/MovementCategories";
+import InterDepotList from "./pages/client/inventory/InterDepotList";
+import NewInterDepot from "./pages/client/inventory/NewInterDepot";
+import ProductsList from "./pages/client/inventory/ProductsList";
+import NewProduct from "./pages/client/inventory/NewProduct";
+import ProductStatus from "./pages/client/inventory/ProductStatus";
+import ProductCatalogsList from "./pages/client/inventory/ProductCatalogsList";
+import NewProductCatalog from "./pages/client/inventory/NewProductCatalog";
+import ProductCategories from "./pages/client/inventory/ProductCategories";
+import NewProductCategory from "./pages/client/inventory/NewProductCategory";
+import DepotsList from "./pages/client/inventory/DepotsList";
+import NewDepot from "./pages/client/inventory/NewDepot";
+import PriceTablesList from "./pages/client/inventory/PriceTablesList";
+import NewPriceTable from "./pages/client/inventory/NewPriceTable";
+import BrandsList from "./pages/client/inventory/BrandsList";
+import NewBrand from "./pages/client/inventory/NewBrand";
+import SizesList from "./pages/client/inventory/SizesList";
+import NewSize from "./pages/client/inventory/NewSize";
+import UnitsList from "./pages/client/inventory/UnitsList";
+import NewLabel from "./pages/client/inventory/NewLabel";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -173,8 +195,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
               <Icon
                 size={20}
                 className={`transition-colors ${(active || isOpen) && depth === 0
-                    ? "text-[#6C63FF] dark:text-[#818cf8]"
-                    : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
+                  ? "text-[#6C63FF] dark:text-[#818cf8]"
+                  : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
                   }`}
               />
             )}
@@ -225,8 +247,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
     <Link
       to={to!}
       className={`flex items-center gap-3 py-2 pr-3 text-sm font-medium rounded-lg transition-colors group ${active
-          ? "bg-indigo-50 text-[#6C63FF] dark:bg-indigo-900/20 dark:text-[#818cf8]" // Item selecionado
-          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+        ? "bg-indigo-50 text-[#6C63FF] dark:bg-indigo-900/20 dark:text-[#818cf8]" // Item selecionado
+        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
         }`}
       style={{ paddingLeft: `${paddingLeft}px` }}
     >
@@ -234,8 +256,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
         <Icon
           size={20}
           className={`transition-colors ${active
-              ? "text-[#6C63FF] dark:text-[#818cf8]"
-              : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
+            ? "text-[#6C63FF] dark:text-[#818cf8]"
+            : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
             }`}
         />
       )}
@@ -436,8 +458,8 @@ const Layout: React.FC<LayoutProps> = ({
         <div className="p-6 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700">
           <div
             className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold ${type === "admin"
-                ? "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
-                : "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
+              ? "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
+              : "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
               }`}
           >
             {type === "admin" ? "M" : " "}
@@ -822,7 +844,32 @@ const App = () => {
                   <Route path="catalog" element={<Catalog />} />
 
                   {/* Rotas de Estoque */}
-                  <Route path="inventory/*" element={<InventoryPlaceholder />} />
+                  {/* Rotas de Estoque */}
+                  <Route path="inventory/movements" element={<MovementsList />} />
+                  <Route path="inventory/new-movement" element={<NewMovement />} />
+                  <Route path="inventory/movement-categories" element={<MovementCategories />} />
+                  <Route path="inventory/inter-depot" element={<InterDepotList />} />
+                  <Route path="inventory/new-inter-depot" element={<NewInterDepot />} />
+
+                  <Route path="inventory/products" element={<ProductsList />} />
+                  <Route path="inventory/new-product" element={<NewProduct />} />
+                  <Route path="inventory/product-status" element={<ProductStatus />} />
+                  <Route path="inventory/product-catalogs" element={<ProductCatalogsList />} />
+                  <Route path="inventory/new-product-catalog" element={<NewProductCatalog />} />
+                  <Route path="inventory/product-categories" element={<ProductCategories />} />
+                  <Route path="inventory/new-product-category" element={<NewProductCategory />} />
+
+                  <Route path="inventory/depots" element={<DepotsList />} />
+                  <Route path="inventory/new-depot" element={<NewDepot />} />
+                  <Route path="inventory/price-tables" element={<PriceTablesList />} />
+                  <Route path="inventory/new-price-table" element={<NewPriceTable />} />
+
+                  <Route path="inventory/brands" element={<BrandsList />} />
+                  <Route path="inventory/new-brand" element={<NewBrand />} />
+                  <Route path="inventory/sizes" element={<SizesList />} />
+                  <Route path="inventory/new-size" element={<NewSize />} />
+                  <Route path="inventory/units" element={<UnitsList />} />
+                  <Route path="inventory/new-label" element={<NewLabel />} />
 
                   <Route path="reports" element={<Reports />} />
                   <Route path="settings" element={<Settings />} />
