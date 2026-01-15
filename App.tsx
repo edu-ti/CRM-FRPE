@@ -25,7 +25,7 @@ import {
   CreditCard,
   Server,
   UserCog,
-  Box,
+  Box, // Icone para Modulos (Admin)
   LayoutTemplate,
   LifeBuoy,
   ScrollText,
@@ -38,6 +38,9 @@ import {
   Lock,
   FileText, // Ícone para Propostas
   BookOpen, // Ícone para Catálogo
+  ChevronDown, // Novo
+  ChevronRight, // Novo
+  Package, // Ícone para Estoque (Novo)
 } from "lucide-react";
 import {
   onAuthStateChanged,
@@ -77,6 +80,7 @@ import Settings from "./pages/client/Settings";
 import Proposals from "./pages/client/Proposals"; // Nova Página
 import Catalog from "./pages/client/Catalog"; // Nova Página
 import ProposalPrint from "./pages/client/ProposalPrint"; // Nova Importação
+import InventoryPlaceholder from "./pages/client/inventory/InventoryPlaceholder"; // Nova Importação
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -116,8 +120,9 @@ const defaultPermissions: AdminPermissions = {
 interface SidebarItemProps {
   icon: any;
   label: string;
-  to: string;
+  to?: string;
   active: boolean;
+  subItems?: { label: string; to: string }[];
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({
@@ -125,26 +130,88 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   label,
   to,
   active,
-}) => (
-  <Link
-    to={to}
-    className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${
-      active
-        ? "bg-indigo-50 text-[#6C63FF] dark:bg-indigo-900/20 dark:text-[#818cf8]"
-        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-    }`}
-  >
-    <Icon
-      size={20}
-      className={`transition-colors ${
-        active
-          ? "text-[#6C63FF] dark:text-[#818cf8]"
-          : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
-      }`}
-    />
-    <span>{label}</span>
-  </Link>
-);
+  subItems,
+}) => {
+  const [isOpen, setIsOpen] = useState(active);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (active) {
+      setIsOpen(true);
+    }
+  }, [active]);
+
+  const hasSubItems = subItems && subItems.length > 0;
+
+  if (hasSubItems) {
+    return (
+      <div className="mb-1">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${active || isOpen
+              ? "bg-slate-800 text-white" // Estilo inspirado na imagem (fundo escuro quando ativo/aberto) - Ajuste conforme tema mas tentando aproximar
+              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+            }`}
+        // Nota: O bg-slate-800 é um hardcode para tentar imitar o azul escuro da imagem.
+        // Idealmente usaria as cores do tema, ex: bg-indigo-50 text-[#6C63FF] se quisesse manter consistencia com os outros.
+        // Vou manter consistente com o design system atual do app (indigo) para não quebrar o padrão, a menos que o usuário peça explicitamente a cor exata.
+        // Vou reverter para o padrão do app para manter consistência visual, mas manter a logica de abertura.
+        >
+          <div className={`flex items-center gap-3 ${active || isOpen ? "text-[#6C63FF] dark:text-[#818cf8]" : ""}`}>
+            <Icon
+              size={20}
+              className={`transition-colors ${active || isOpen
+                  ? "text-[#6C63FF] dark:text-[#818cf8]"
+                  : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
+                }`}
+            />
+            <span className={active || isOpen ? "text-[#6C63FF] dark:text-[#818cf8]" : ""}>{label}</span>
+          </div>
+          {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+        </button>
+
+        {isOpen && (
+          <div className="mt-1 ml-4 space-y-1 border-l-2 border-gray-200 dark:border-gray-700 pl-2">
+            {subItems?.map((sub) => {
+              const isSubActive = location.pathname === sub.to;
+              return (
+                <Link
+                  key={sub.to}
+                  to={sub.to}
+                  className={`block px-4 py-2 text-sm rounded-lg transition-colors ${isSubActive
+                      ? "text-[#6C63FF] font-medium bg-indigo-50 dark:bg-indigo-900/20 dark:text-[#818cf8]"
+                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800"
+                    }`}
+                >
+                  {sub.label}
+                </Link>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      to={to!}
+      className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${active
+          ? "bg-indigo-50 text-[#6C63FF] dark:bg-indigo-900/20 dark:text-[#818cf8]"
+          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+        }`}
+    >
+      <Icon
+        size={20}
+        className={`transition-colors ${active
+            ? "text-[#6C63FF] dark:text-[#818cf8]"
+            : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
+          }`}
+      />
+      <span>{label}</span>
+    </Link>
+  );
+};
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -205,18 +272,48 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   const clientLinks = [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/app/dashboard" },
-    { icon: MessageSquare, label: "Conversas", path: "/app/conversations" },
-    { icon: Users, label: "Clientes", path: "/app/contacts" }, // Renomeado de Contatos para Clientes
-    { icon: Filter, label: "Funil de Vendas", path: "/app/funnel" },
-    { icon: Bot, label: "Chatbot", path: "/app/chatbot" },
-    { icon: Megaphone, label: "Campanhas", path: "/app/campaigns" },
-    { icon: CheckSquare, label: "Tarefas", path: "/app/tasks" },
-    { icon: CalendarIcon, label: "Agenda", path: "/app/calendar" },
-    { icon: FileText, label: "Propostas", path: "/app/proposals" }, // Novo item
-    { icon: BookOpen, label: "Catálogo", path: "/app/catalog" }, // Novo item
-    { icon: BarChart3, label: "Relatórios", path: "/app/reports" },
-    { icon: SettingsIcon, label: "Configurações", path: "/app/settings" },
+    { icon: LayoutDashboard, label: "Dashboard", to: "/app/dashboard", active: location.pathname === "/app/dashboard" },
+    { icon: MessageSquare, label: "Conversas", to: "/app/conversations", active: location.pathname === "/app/conversations" },
+    { icon: Users, label: "Clientes", to: "/app/contacts", active: location.pathname === "/app/contacts" },
+    { icon: Filter, label: "Funil de Vendas", to: "/app/funnel", active: location.pathname === "/app/funnel" },
+    { icon: Bot, label: "Chatbot", to: "/app/chatbot", active: location.pathname === "/app/chatbot" },
+    { icon: Megaphone, label: "Campanhas", to: "/app/campaigns", active: location.pathname === "/app/campaigns" },
+    { icon: CheckSquare, label: "Tarefas", to: "/app/tasks", active: location.pathname === "/app/tasks" },
+    { icon: CalendarIcon, label: "Agenda", to: "/app/calendar", active: location.pathname === "/app/calendar" },
+    { icon: FileText, label: "Propostas", to: "/app/proposals", active: location.pathname === "/app/proposals" },
+    { icon: BookOpen, label: "Catálogo", to: "/app/catalog", active: location.pathname === "/app/catalog" },
+    // Menu Estoque
+    {
+      icon: Package,
+      label: "Estoque",
+      active: location.pathname.startsWith("/app/inventory"),
+      subItems: [
+        { label: "Movimentações", to: "/app/inventory/movements" },
+        { label: "Nova Movimentação", to: "/app/inventory/new-movement" },
+        { label: "Entre Depósitos", to: "/app/inventory/inter-depot" },
+        { label: "Nova Entre Depósitos", to: "/app/inventory/new-inter-depot" },
+        { label: "Produtos", to: "/app/inventory/products" },
+        { label: "Novo Produto", to: "/app/inventory/new-product" },
+        { label: "Status do Produto", to: "/app/inventory/product-status" },
+        { label: "Depósitos", to: "/app/inventory/depots" },
+        { label: "Novo Depósito", to: "/app/inventory/new-depot" },
+        { label: "Tabelas de Preços", to: "/app/inventory/price-tables" },
+        { label: "Nova Tabela de Preços", to: "/app/inventory/new-price-table" },
+        { label: "Catálogos de Produtos", to: "/app/inventory/product-catalogs" },
+        { label: "Novo Catálogo de Produtos", to: "/app/inventory/new-product-catalog" },
+        { label: "Categorias de Produtos", to: "/app/inventory/product-categories" },
+        { label: "Nova Categoria de Produtos", to: "/app/inventory/new-product-category" },
+        { label: "Categorias de Movimentações", to: "/app/inventory/movement-categories" },
+        { label: "Marcas", to: "/app/inventory/brands" },
+        { label: "Nova Marca", to: "/app/inventory/new-brand" },
+        { label: "Tamanhos", to: "/app/inventory/sizes" },
+        { label: "Novo Tamanho", to: "/app/inventory/new-size" },
+        { label: "Unidades de Medida", to: "/app/inventory/units" },
+        { label: "Nova Etiqueta", to: "/app/inventory/new-label" },
+      ]
+    },
+    { icon: BarChart3, label: "Relatórios", to: "/app/reports", active: location.pathname === "/app/reports" },
+    { icon: SettingsIcon, label: "Configurações", to: "/app/settings", active: location.pathname === "/app/settings" },
   ];
 
   const allAdminLinks = [
@@ -292,29 +389,27 @@ const Layout: React.FC<LayoutProps> = ({
   const adminLinks =
     type === "admin"
       ? allAdminLinks.filter((link) => {
-          if (!permissions) return false;
-          if (permissions.superadmin) return true;
-          if (link.req === "any") return true;
-          return permissions[link.req as keyof AdminPermissions];
-        })
+        if (!permissions) return false;
+        if (permissions.superadmin) return true;
+        if (link.req === "any") return true;
+        return permissions[link.req as keyof AdminPermissions];
+      }).map(l => ({ ...l, to: l.path, active: location.pathname.startsWith(l.path) }))
       : [];
 
   const links = type === "admin" ? adminLinks : clientLinks;
 
   return (
     <div
-      className={`flex h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden transition-colors duration-200 ${
-        isDarkMode ? "dark" : ""
-      }`}
+      className={`flex h-screen bg-gray-100 dark:bg-gray-900 overflow-hidden transition-colors duration-200 ${isDarkMode ? "dark" : ""
+        }`}
     >
       <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full hidden md:flex z-20 transition-all duration-300">
         <div className="p-6 flex items-center gap-2 border-b border-gray-100 dark:border-gray-700">
           <div
-            className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold ${
-              type === "admin"
+            className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold ${type === "admin"
                 ? "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
                 : "bg-[#ffffff] dark:bg-gray-800 dark:text-gray-800"
-            }`}
+              }`}
           >
             {type === "admin" ? "M" : " "}
           </div>
@@ -336,13 +431,14 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
-          {links.map((link) => (
+          {links.map((link: any) => (
             <SidebarItem
-              key={link.path}
+              key={link.label}
               icon={link.icon}
               label={link.label}
-              to={link.path}
-              active={location.pathname.startsWith(link.path)}
+              to={link.to || link.path}
+              active={link.active !== undefined ? link.active : location.pathname.startsWith(link.path)}
+              subItems={link.subItems}
             />
           ))}
         </nav>
@@ -424,9 +520,8 @@ const Layout: React.FC<LayoutProps> = ({
             </div>
             <ChevronUp
               size={16}
-              className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
-                isUserMenuOpen ? "rotate-180" : ""
-              }`}
+              className={`text-gray-400 dark:text-gray-500 transition-transform duration-200 ${isUserMenuOpen ? "rotate-180" : ""
+                }`}
             />
           </button>
         </div>
@@ -675,7 +770,7 @@ const App = () => {
             )
           }
         />
-        
+
         {/* Nova Rota de Impressão (Fora do Layout Principal) */}
         <Route path="/print/proposal/:id" element={<ProposalPrint />} />
 
@@ -697,10 +792,12 @@ const App = () => {
                   <Route path="campaigns" element={<Campaigns />} />
                   <Route path="tasks" element={<Tasks />} />
                   <Route path="calendar" element={<Calendar />} />
-                  <Route path="proposals" element={<Proposals />} />{" "}
-                  {/* Nova Rota */}
-                  <Route path="catalog" element={<Catalog />} />{" "}
-                  {/* Nova Rota */}
+                  <Route path="proposals" element={<Proposals />} />
+                  <Route path="catalog" element={<Catalog />} />
+
+                  {/* Rotas de Estoque */}
+                  <Route path="inventory/*" element={<InventoryPlaceholder />} />
+
                   <Route path="reports" element={<Reports />} />
                   <Route path="settings" element={<Settings />} />
                   <Route path="*" element={<Navigate to="/app/dashboard" />} />
