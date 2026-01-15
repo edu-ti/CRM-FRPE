@@ -38,9 +38,9 @@ import {
   Lock,
   FileText, // Ícone para Propostas
   BookOpen, // Ícone para Catálogo
-  ChevronDown, // Novo
-  ChevronRight, // Novo
-  Package, // Ícone para Estoque (Novo)
+  ChevronDown,
+  ChevronRight,
+  Package, // Ícone para Estoque
 } from "lucide-react";
 import {
   onAuthStateChanged,
@@ -77,10 +77,10 @@ import Tasks from "./pages/client/Tasks";
 import Calendar from "./pages/client/Calendar";
 import Reports from "./pages/client/Reports";
 import Settings from "./pages/client/Settings";
-import Proposals from "./pages/client/Proposals"; // Nova Página
-import Catalog from "./pages/client/Catalog"; // Nova Página
-import ProposalPrint from "./pages/client/ProposalPrint"; // Nova Importação
-import InventoryPlaceholder from "./pages/client/inventory/InventoryPlaceholder"; // Nova Importação
+import Proposals from "./pages/client/Proposals";
+import Catalog from "./pages/client/Catalog";
+import ProposalPrint from "./pages/client/ProposalPrint";
+import InventoryPlaceholder from "./pages/client/inventory/InventoryPlaceholder";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -117,12 +117,17 @@ const defaultPermissions: AdminPermissions = {
   superadmin: false,
 };
 
-interface SidebarItemProps {
-  icon: any;
+// Interface para itens do sidebar (recursiva)
+interface SidebarLinkItem {
+  icon?: any;
   label: string;
   to?: string;
-  active: boolean;
-  subItems?: { label: string; to: string }[];
+  active?: boolean;
+  subItems?: SidebarLinkItem[];
+}
+
+interface SidebarItemProps extends SidebarLinkItem {
+  depth?: number;
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({
@@ -131,11 +136,14 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
   to,
   active,
   subItems,
+  depth = 0,
 }) => {
+  // Estado para controlar abertura. Se 'active' for true (algum filho ativo), inicia aberto.
   const [isOpen, setIsOpen] = useState(active);
   const location = useLocation();
 
   useEffect(() => {
+    // Se a rota atual corresponde a este item ou algum subItem (deep check), abre o menu
     if (active) {
       setIsOpen(true);
     }
@@ -143,49 +151,68 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
   const hasSubItems = subItems && subItems.length > 0;
 
+  // Padding baseado no nível de profundidade
+  const paddingLeft = 16 + depth * 12; // 16px base + 12px por nível extra
+
   if (hasSubItems) {
     return (
-      <div className="mb-1">
+      <div className="mb-0.5">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${active || isOpen
-              ? "bg-slate-800 text-white" // Estilo inspirado na imagem (fundo escuro quando ativo/aberto) - Ajuste conforme tema mas tentando aproximar
+          className={`w-full flex items-center justify-between py-2 pr-3 text-sm font-medium rounded-lg transition-colors group ${
+            // Se estiver ativo ou aberto, muda cor apenas se for Nível 0 (raiz)
+            // Itens aninhados (depth > 0) tratamos diferente para não ficar muito carregado
+            (active || isOpen) && depth === 0
+              ? "text-[#6C63FF] dark:text-[#818cf8]"
               : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
             }`}
-        // Nota: O bg-slate-800 é um hardcode para tentar imitar o azul escuro da imagem.
-        // Idealmente usaria as cores do tema, ex: bg-indigo-50 text-[#6C63FF] se quisesse manter consistencia com os outros.
-        // Vou manter consistente com o design system atual do app (indigo) para não quebrar o padrão, a menos que o usuário peça explicitamente a cor exata.
-        // Vou reverter para o padrão do app para manter consistência visual, mas manter a logica de abertura.
+          style={{ paddingLeft: `${paddingLeft}px` }}
         >
-          <div className={`flex items-center gap-3 ${active || isOpen ? "text-[#6C63FF] dark:text-[#818cf8]" : ""}`}>
-            <Icon
-              size={20}
-              className={`transition-colors ${active || isOpen
-                  ? "text-[#6C63FF] dark:text-[#818cf8]"
-                  : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
-                }`}
-            />
-            <span className={active || isOpen ? "text-[#6C63FF] dark:text-[#818cf8]" : ""}>{label}</span>
+          <div className="flex items-center gap-3">
+            {Icon && (
+              <Icon
+                size={20}
+                className={`transition-colors ${(active || isOpen) && depth === 0
+                    ? "text-[#6C63FF] dark:text-[#818cf8]"
+                    : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
+                  }`}
+              />
+            )}
+            <span className={active || isOpen ? "text-[#6C63FF] dark:text-[#818cf8]" : ""}>
+              {label}
+            </span>
           </div>
-          {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          {isOpen ? (
+            <ChevronDown size={14} className={active ? "text-[#6C63FF]" : "text-gray-400"} />
+          ) : (
+            <ChevronRight size={14} className="text-gray-400" />
+          )}
         </button>
 
         {isOpen && (
-          <div className="mt-1 ml-4 space-y-1 border-l-2 border-gray-200 dark:border-gray-700 pl-2">
+          <div className="mt-0.5 space-y-0.5">
             {subItems?.map((sub) => {
-              const isSubActive = location.pathname === sub.to;
+              // Verifica recursivamente se este subitem está ativo
+
+              // Helper para checar se está ativo (incluindo filhos recursivamente)
+              const isChildActive = (item: SidebarLinkItem): boolean => {
+                if (item.to && location.pathname === item.to) return true;
+                if (item.to && location.pathname.startsWith(item.to + "/")) return true; // match prefixo se for o caso
+                if (item.subItems) {
+                  return item.subItems.some(child => isChildActive(child));
+                }
+                return false;
+              };
+              const isActive = isChildActive(sub);
+
               return (
-                <Link
-                  key={sub.to}
-                  to={sub.to}
-                  className={`block px-4 py-2 text-sm rounded-lg transition-colors ${isSubActive
-                      ? "text-[#6C63FF] font-medium bg-indigo-50 dark:bg-indigo-900/20 dark:text-[#818cf8]"
-                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800"
-                    }`}
-                >
-                  {sub.label}
-                </Link>
-              )
+                <SidebarItem
+                  key={sub.label}
+                  {...sub}
+                  active={isActive}
+                  depth={depth + 1}
+                />
+              );
             })}
           </div>
         )}
@@ -193,21 +220,25 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
     );
   }
 
+  // Item final (Link)
   return (
     <Link
       to={to!}
-      className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors group ${active
-          ? "bg-indigo-50 text-[#6C63FF] dark:bg-indigo-900/20 dark:text-[#818cf8]"
+      className={`flex items-center gap-3 py-2 pr-3 text-sm font-medium rounded-lg transition-colors group ${active
+          ? "bg-indigo-50 text-[#6C63FF] dark:bg-indigo-900/20 dark:text-[#818cf8]" // Item selecionado
           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
         }`}
+      style={{ paddingLeft: `${paddingLeft}px` }}
     >
-      <Icon
-        size={20}
-        className={`transition-colors ${active
-            ? "text-[#6C63FF] dark:text-[#818cf8]"
-            : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
-          }`}
-      />
+      {Icon && (
+        <Icon
+          size={20}
+          className={`transition-colors ${active
+              ? "text-[#6C63FF] dark:text-[#818cf8]"
+              : "text-gray-500 group-hover:text-[#6C63FF] dark:text-gray-500 dark:group-hover:text-[#818cf8]"
+            }`}
+        />
+      )}
       <span>{label}</span>
     </Link>
   );
@@ -271,129 +302,127 @@ const Layout: React.FC<LayoutProps> = ({
     setIsUserMenuOpen(false);
   };
 
-  const clientLinks = [
-    { icon: LayoutDashboard, label: "Dashboard", to: "/app/dashboard", active: location.pathname === "/app/dashboard" },
-    { icon: MessageSquare, label: "Conversas", to: "/app/conversations", active: location.pathname === "/app/conversations" },
-    { icon: Users, label: "Clientes", to: "/app/contacts", active: location.pathname === "/app/contacts" },
-    { icon: Filter, label: "Funil de Vendas", to: "/app/funnel", active: location.pathname === "/app/funnel" },
-    { icon: Bot, label: "Chatbot", to: "/app/chatbot", active: location.pathname === "/app/chatbot" },
-    { icon: Megaphone, label: "Campanhas", to: "/app/campaigns", active: location.pathname === "/app/campaigns" },
-    { icon: CheckSquare, label: "Tarefas", to: "/app/tasks", active: location.pathname === "/app/tasks" },
-    { icon: CalendarIcon, label: "Agenda", to: "/app/calendar", active: location.pathname === "/app/calendar" },
-    { icon: FileText, label: "Propostas", to: "/app/proposals", active: location.pathname === "/app/proposals" },
-    { icon: BookOpen, label: "Catálogo", to: "/app/catalog", active: location.pathname === "/app/catalog" },
-    // Menu Estoque
+  const isLinkActive = (link: SidebarLinkItem): boolean => {
+    if (link.to && location.pathname === link.to) return true;
+    if (link.to && location.pathname.startsWith(link.to + "/")) return true;
+    if (link.subItems) {
+      return link.subItems.some(sub => isLinkActive(sub));
+    }
+    return false;
+  }
+
+  const clientLinks: SidebarLinkItem[] = [
+    { icon: LayoutDashboard, label: "Dashboard", to: "/app/dashboard" },
+    { icon: MessageSquare, label: "Conversas", to: "/app/conversations" },
+    { icon: Users, label: "Clientes", to: "/app/contacts" },
+    { icon: Filter, label: "Funil de Vendas", to: "/app/funnel" },
+    { icon: Bot, label: "Chatbot", to: "/app/chatbot" },
+    { icon: Megaphone, label: "Campanhas", to: "/app/campaigns" },
+    { icon: CheckSquare, label: "Tarefas", to: "/app/tasks" },
+    { icon: CalendarIcon, label: "Agenda", to: "/app/calendar" },
+    { icon: FileText, label: "Propostas", to: "/app/proposals" },
+    { icon: BookOpen, label: "Catálogo", to: "/app/catalog" },
+    // Menu Estoque Reorganizado
     {
       icon: Package,
       label: "Estoque",
-      active: location.pathname.startsWith("/app/inventory"),
       subItems: [
-        { label: "Movimentações", to: "/app/inventory/movements" },
-        { label: "Nova Movimentação", to: "/app/inventory/new-movement" },
-        { label: "Entre Depósitos", to: "/app/inventory/inter-depot" },
-        { label: "Nova Entre Depósitos", to: "/app/inventory/new-inter-depot" },
-        { label: "Produtos", to: "/app/inventory/products" },
-        { label: "Novo Produto", to: "/app/inventory/new-product" },
-        { label: "Status do Produto", to: "/app/inventory/product-status" },
-        { label: "Depósitos", to: "/app/inventory/depots" },
-        { label: "Novo Depósito", to: "/app/inventory/new-depot" },
-        { label: "Tabelas de Preços", to: "/app/inventory/price-tables" },
-        { label: "Nova Tabela de Preços", to: "/app/inventory/new-price-table" },
-        { label: "Catálogos de Produtos", to: "/app/inventory/product-catalogs" },
-        { label: "Novo Catálogo de Produtos", to: "/app/inventory/new-product-catalog" },
-        { label: "Categorias de Produtos", to: "/app/inventory/product-categories" },
-        { label: "Nova Categoria de Produtos", to: "/app/inventory/new-product-category" },
-        { label: "Categorias de Movimentações", to: "/app/inventory/movement-categories" },
-        { label: "Marcas", to: "/app/inventory/brands" },
-        { label: "Nova Marca", to: "/app/inventory/new-brand" },
-        { label: "Tamanhos", to: "/app/inventory/sizes" },
-        { label: "Novo Tamanho", to: "/app/inventory/new-size" },
-        { label: "Unidades de Medida", to: "/app/inventory/units" },
-        { label: "Nova Etiqueta", to: "/app/inventory/new-label" },
+        {
+          label: "Movimentações",
+          subItems: [
+            { label: "Todas Movimentações", to: "/app/inventory/movements" },
+            { label: "Nova Movimentação", to: "/app/inventory/new-movement" },
+            { label: "Categorias", to: "/app/inventory/movement-categories" },
+          ]
+        },
+        {
+          label: "Entradas/Saídas",
+          subItems: [
+            { label: "Entre Depósitos", to: "/app/inventory/inter-depot" },
+            { label: "Nova Transf.", to: "/app/inventory/new-inter-depot" },
+          ]
+        },
+        {
+          label: "Produtos",
+          subItems: [
+            { label: "Listar Produtos", to: "/app/inventory/products" },
+            { label: "Novo Produto", to: "/app/inventory/new-product" },
+            { label: "Status do Produto", to: "/app/inventory/product-status" },
+          ]
+        },
+        {
+          label: "Catálogos",
+          subItems: [
+            { label: "Listar Catálogos", to: "/app/inventory/product-catalogs" },
+            { label: "Novo Catálogo", to: "/app/inventory/new-product-catalog" },
+          ]
+        },
+        {
+          label: "Categorias",
+          subItems: [
+            { label: "Listar Categorias", to: "/app/inventory/product-categories" },
+            { label: "Nova Categoria", to: "/app/inventory/new-product-category" },
+          ]
+        },
+        {
+          label: "Depósitos",
+          subItems: [
+            { label: "Listar Depósitos", to: "/app/inventory/depots" },
+            { label: "Novo Depósito", to: "/app/inventory/new-depot" },
+          ]
+        },
+        {
+          label: "Tabelas de Preço",
+          subItems: [
+            { label: "Listar Tabelas", to: "/app/inventory/price-tables" },
+            { label: "Nova Tabela", to: "/app/inventory/new-price-table" },
+          ]
+        },
+        {
+          label: "Marcas",
+          subItems: [
+            { label: "Listar Marcas", to: "/app/inventory/brands" },
+            { label: "Nova Marca", to: "/app/inventory/new-brand" },
+          ]
+        },
+        {
+          label: "Atributos",
+          subItems: [
+            { label: "Tamanhos", to: "/app/inventory/sizes" },
+            { label: "Novo Tamanho", to: "/app/inventory/new-size" },
+            { label: "Unidades de Medida", to: "/app/inventory/units" },
+            { label: "Nova Etiqueta", to: "/app/inventory/new-label" },
+          ]
+        }
       ]
     },
-    { icon: BarChart3, label: "Relatórios", to: "/app/reports", active: location.pathname === "/app/reports" },
-    { icon: SettingsIcon, label: "Configurações", to: "/app/settings", active: location.pathname === "/app/settings" },
+    { icon: BarChart3, label: "Relatórios", to: "/app/reports" },
+    { icon: SettingsIcon, label: "Configurações", to: "/app/settings" },
   ];
 
-  const allAdminLinks = [
-    {
-      icon: LayoutDashboard,
-      label: "Dashboard Master",
-      path: "/admin/dashboard",
-      req: "any",
-    },
-    {
-      icon: Building2,
-      label: "Clientes (Empresas)",
-      path: "/admin/companies",
-      req: "sales",
-    },
-    {
-      icon: Shield,
-      label: "Planos e Assinaturas",
-      path: "/admin/plans",
-      req: "finance",
-    },
-    {
-      icon: CreditCard,
-      label: "Financeiro",
-      path: "/admin/finance",
-      req: "finance",
-    },
-    {
-      icon: Server,
-      label: "Instâncias WhatsApp",
-      path: "/admin/instances",
-      req: "tech",
-    },
-    {
-      icon: Plug,
-      label: "Integrações",
-      path: "/admin/integrations",
-      req: "tech",
-    },
+  const adminLinksRaw = [
+    { icon: LayoutDashboard, label: "Dashboard Master", path: "/admin/dashboard", req: "any" },
+    { icon: Building2, label: "Clientes (Empresas)", path: "/admin/companies", req: "sales" },
+    { icon: Shield, label: "Planos", path: "/admin/plans", req: "finance" },
+    { icon: CreditCard, label: "Financeiro", path: "/admin/finance", req: "finance" },
+    { icon: Server, label: "Instâncias", path: "/admin/instances", req: "tech" },
+    { icon: Plug, label: "Integrações", path: "/admin/integrations", req: "tech" },
     { icon: Box, label: "Módulos", path: "/admin/modules", req: "sales" },
-    {
-      icon: LayoutTemplate,
-      label: "Templates Globais",
-      path: "/admin/templates",
-      req: "support",
-    },
-    {
-      icon: Users,
-      label: "Equipe BidFlow",
-      path: "/admin/team",
-      req: "superadmin",
-    },
-    {
-      icon: LifeBuoy,
-      label: "Suporte (Tickets)",
-      path: "/admin/support",
-      req: "support",
-    },
-    {
-      icon: ScrollText,
-      label: "Logs & Auditoria",
-      path: "/admin/logs",
-      req: "tech",
-    },
-    {
-      icon: Globe,
-      label: "Configurações Sistema",
-      path: "/admin/settings",
-      req: "tech",
-    },
+    { icon: LayoutTemplate, label: "Templates", path: "/admin/templates", req: "support" },
+    { icon: Users, label: "Equipe", path: "/admin/team", req: "superadmin" },
+    { icon: LifeBuoy, label: "Suporte", path: "/admin/support", req: "support" },
+    { icon: ScrollText, label: "Logs", path: "/admin/logs", req: "tech" },
+    { icon: Globe, label: "Configurações", path: "/admin/settings", req: "tech" },
   ];
 
   const adminLinks =
     type === "admin"
-      ? allAdminLinks.filter((link) => {
+      ? adminLinksRaw.filter((link) => {
         if (!permissions) return false;
         if (permissions.superadmin) return true;
         if (link.req === "any") return true;
         return permissions[link.req as keyof AdminPermissions];
-      }).map(l => ({ ...l, to: l.path, active: location.pathname.startsWith(l.path) }))
+      }).map(l => ({ ...l, to: l.path }))
       : [];
 
   const links = type === "admin" ? adminLinks : clientLinks;
@@ -431,14 +460,11 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
-          {links.map((link: any) => (
+          {links.map((link) => (
             <SidebarItem
               key={link.label}
-              icon={link.icon}
-              label={link.label}
-              to={link.to || link.path}
-              active={link.active !== undefined ? link.active : location.pathname.startsWith(link.path)}
-              subItems={link.subItems}
+              {...link}
+              active={isLinkActive(link)}
             />
           ))}
         </nav>
