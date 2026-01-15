@@ -100,6 +100,9 @@ const NewProduct = () => {
             const statusObj = statuses.find(s => s.id === formData.statusId);
             const productData = {
                 ...formData,
+                onHandQty: formData.quantity,
+                reservedQty: 0,
+                quantity: formData.quantity, // Legacy
                 status: statusObj ? statusObj.name : 'Indefinido',
                 createdAt: new Date().toISOString()
             };
@@ -160,8 +163,8 @@ const NewProduct = () => {
                                     key={tab}
                                     onClick={() => setActiveTab(tab.toLowerCase())}
                                     className={`px-6 py-4 text-sm font-medium transition-colors ${activeTab === tab.toLowerCase()
-                                            ? 'text-[#6C63FF] border-b-2 border-[#6C63FF] bg-gray-50 dark:bg-gray-700/50'
-                                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                                        ? 'text-[#6C63FF] border-b-2 border-[#6C63FF] bg-gray-50 dark:bg-gray-700/50'
+                                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50'
                                         }`}
                                 >
                                     {tab}

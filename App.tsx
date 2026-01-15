@@ -98,6 +98,7 @@ import NewDepot from "./pages/client/inventory/NewDepot";
 import PriceTablesList from "./pages/client/inventory/PriceTablesList";
 import NewPriceTable from "./pages/client/inventory/NewPriceTable";
 import BrandsList from "./pages/client/inventory/BrandsList";
+import OrdersSimulator from "./pages/client/inventory/OrdersSimulator";
 import NewBrand from "./pages/client/inventory/NewBrand";
 import SizesList from "./pages/client/inventory/SizesList";
 import NewSize from "./pages/client/inventory/NewSize";
