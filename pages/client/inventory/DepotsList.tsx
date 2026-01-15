@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { db, auth, appId } from '../../../../lib/firebase';
+import { db, auth, appId } from '../../../lib/firebase';
 import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
 
 interface Depot {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { db, auth, appId } from '../../../../lib/firebase';
+import { db, auth, appId } from '../../../lib/firebase';
 import { collection, addDoc, onSnapshot } from 'firebase/firestore';
 
 interface PriceTable {

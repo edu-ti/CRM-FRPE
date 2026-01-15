@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, X, Save, Loader2 } from 'lucide-react';
-import { db, auth, appId } from '../../../../lib/firebase';
+import { db, auth, appId } from '../../../lib/firebase';
 import { collection, addDoc, deleteDoc, doc, updateDoc, onSnapshot } from 'firebase/firestore';
 
 interface Status {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Plus, Trash2, Calendar, Search, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { db, auth, appId } from '../../../../lib/firebase';
+import { db, auth, appId } from '../../../lib/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
 
 const NewMovement = () => {

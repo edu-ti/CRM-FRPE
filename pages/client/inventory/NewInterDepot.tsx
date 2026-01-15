@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Plus, Trash2, Loader2, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { db, auth, appId } from '../../../../lib/firebase';
+import { db, auth, appId } from '../../../lib/firebase';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 
 const NewInterDepot = () => {

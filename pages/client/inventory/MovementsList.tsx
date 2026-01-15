@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Filter, Eye, ArrowUpRight, ArrowDownLeft, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { db, auth, appId } from '../../../../lib/firebase';
+import { db, auth, appId } from '../../../lib/firebase';
 import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore'; // Added orderBy
 
 interface Movement {

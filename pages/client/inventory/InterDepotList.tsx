@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, ArrowRightLeft, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { db, auth, appId } from '../../../../lib/firebase';
+import { db, auth, appId } from '../../../lib/firebase';
 import { collection, onSnapshot, query, where } from 'firebase/firestore';
 
 interface Transfer {
