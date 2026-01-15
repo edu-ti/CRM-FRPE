@@ -1,18 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { db, auth, appId } from '../../../../lib/firebase';
+import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+
+interface Depot {
+    id: string;
+    name: string;
+    type: string;
+    address: {
+        cep: string;
+        street: string;
+        number: string;
+        neighborhood: string;
+        city: string;
+    };
+    active: boolean;
+}
 
 const DepotsList = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [depots, setDepots] = useState<Depot[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock data
-    const depots = [
-        { id: 1, name: 'Depósito Central', type: 'Físico', address: 'Rua A, 123 - Centro', active: true },
-        { id: 2, name: 'Filial Centro', type: 'Físico', address: 'Av. Brasil, 500 - Centro', active: true },
-        { id: 3, name: 'Farmácia Hospitalar', type: 'Físico', address: 'Hospital Santa Rita', active: true },
-        { id: 4, name: 'Almoxarifado', type: 'Físico', address: 'Subsolo', active: true },
-        { id: 5, name: 'Estoque Virtual E-commerce', type: 'Virtual', address: '-', active: true },
-    ];
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const uid = auth.currentUser.uid;
+        const unsubscribe = onSnapshot(collection(db, "artifacts", appId, "users", uid, "inventory_depots"), snap => {
+            setDepots(snap.docs.map(d => ({ id: d.id, ...d.data() } as Depot)));
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleDelete = async (id: string) => {
+        if (!auth.currentUser) return;
+        if (confirm("Excluir?")) await deleteDoc(doc(db, "artifacts", appId, "users", auth.currentUser.uid, "inventory_depots", id));
+    };
+
+    const filtered = depots.filter(d => d.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
         <div className="p-6 space-y-6">
@@ -56,18 +82,20 @@ const DepotsList = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {depots.map((d) => (
+                            {loading && <tr><td colSpan={5} className="text-center py-4">Carregando...</td></tr>}
+                            {!loading && filtered.length === 0 && <tr><td colSpan={5} className="text-center py-4">Nenhum registro.</td></tr>}
+                            {filtered.map((d) => (
                                 <tr key={d.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                     <td className="py-3 px-4 text-gray-800 dark:text-gray-200 font-medium">{d.name}</td>
                                     <td className="py-3 px-4 text-gray-600 dark:text-gray-300">
-                                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${d.type === 'Físico' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>
+                                        <span className={`px-2 py-1 rounded-md text-xs font-medium ${d.type === 'Físico' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
                                             {d.type}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-gray-600 dark:text-gray-300 text-sm">
                                         <div className="flex items-center gap-1">
-                                            {d.address !== '-' && <MapPin size={14} className="text-gray-400" />}
-                                            {d.address}
+                                            {d.address?.street && <MapPin size={14} className="text-gray-400" />}
+                                            {d.address?.street ? `${d.address.street}, ${d.address.number}` : '-'}
                                         </div>
                                     </td>
                                     <td className="py-3 px-4 text-center">
@@ -83,7 +111,7 @@ const DepotsList = () => {
                                             <button className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors">
                                                 <Edit2 size={16} />
                                             </button>
-                                            <button className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 transition-colors">
+                                            <button onClick={() => handleDelete(d.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 transition-colors">
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>

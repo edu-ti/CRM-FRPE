@@ -1,19 +1,46 @@
-import React, { useState } from 'react';
-import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { db, auth, appId } from '../../../../lib/firebase';
+import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+
+interface Size {
+    id: string;
+    name: string;
+    description: string;
+}
 
 const SizesList = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [sizes, setSizes] = useState<Size[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock data
-    const sizes = [
-        { id: 1, name: 'P', description: 'Pequeno' },
-        { id: 2, name: 'M', description: 'Médio' },
-        { id: 3, name: 'G', description: 'Grande' },
-        { id: 4, name: 'GG', description: 'Extra Grande' },
-        { id: 5, name: '500ml', description: 'Frasco 500ml' },
-        { id: 6, name: '1L', description: 'Frasco 1 Litro' },
-    ];
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const uid = auth.currentUser.uid;
+
+        const unsubscribe = onSnapshot(
+            collection(db, "artifacts", appId, "users", uid, "inventory_sizes"),
+            (snapshot) => {
+                setSizes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Size)));
+                setLoading(false);
+            }
+        );
+
+        return () => unsubscribe();
+    }, []);
+
+    const handleDelete = async (id: string) => {
+        if (!auth.currentUser) return;
+        if (confirm('Tem certeza que deseja excluir este tamanho?')) {
+            await deleteDoc(doc(db, "artifacts", appId, "users", auth.currentUser.uid, "inventory_sizes", id));
+        }
+    };
+
+    const filteredSizes = sizes.filter(s =>
+        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        s.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="p-6 space-y-6">
@@ -55,22 +82,28 @@ const SizesList = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {sizes.map((s) => (
-                                <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td className="py-3 px-4 text-gray-800 dark:text-gray-200 font-medium">{s.name}</td>
-                                    <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{s.description}</td>
-                                    <td className="py-3 px-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors">
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 transition-colors">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                            {loading ? (
+                                <tr><td colSpan={3} className="text-center py-4 text-gray-500">Carregando...</td></tr>
+                            ) : filteredSizes.length === 0 ? (
+                                <tr><td colSpan={3} className="text-center py-4 text-gray-500">Nenhum tamanho encontrado.</td></tr>
+                            ) : (
+                                filteredSizes.map((s) => (
+                                    <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td className="py-3 px-4 text-gray-800 dark:text-gray-200 font-medium">{s.name}</td>
+                                        <td className="py-3 px-4 text-gray-500 dark:text-gray-400">{s.description}</td>
+                                        <td className="py-3 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleDelete(s.id)}
+                                                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

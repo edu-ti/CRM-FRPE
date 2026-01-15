@@ -1,18 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { db, auth, appId } from '../../../../lib/firebase';
+import { collection, deleteDoc, doc, onSnapshot, updateDoc } from 'firebase/firestore';
+
+interface Brand {
+    id: string;
+    name: string;
+    active: boolean;
+}
 
 const BrandsList = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [brands, setBrands] = useState<Brand[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock data
-    const brands = [
-        { id: 1, name: 'EMS', active: true },
-        { id: 2, name: 'Medley', active: true },
-        { id: 3, name: 'Eurofarma', active: true },
-        { id: 4, name: 'Neoquímica', active: true },
-        { id: 5, name: 'BD', active: true },
-    ];
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const uid = auth.currentUser.uid;
+
+        const unsubscribe = onSnapshot(
+            collection(db, "artifacts", appId, "users", uid, "inventory_brands"),
+            (snapshot) => {
+                setBrands(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Brand)));
+                setLoading(false);
+            }
+        );
+
+        return () => unsubscribe();
+    }, []);
+
+    const handleDelete = async (id: string) => {
+        if (!auth.currentUser) return;
+        if (confirm('Tem certeza que deseja excluir esta marca?')) {
+            await deleteDoc(doc(db, "artifacts", appId, "users", auth.currentUser.uid, "inventory_brands", id));
+        }
+    };
+
+    const filteredBrands = brands.filter(b =>
+        b.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="p-6 space-y-6">
@@ -54,29 +81,36 @@ const BrandsList = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {brands.map((b) => (
-                                <tr key={b.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td className="py-3 px-4 text-gray-800 dark:text-gray-200 font-medium">{b.name}</td>
-                                    <td className="py-3 px-4 text-center">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${b.active
-                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                            }`}>
-                                            {b.active ? 'Ativa' : 'Inativa'}
-                                        </span>
-                                    </td>
-                                    <td className="py-3 px-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors">
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 transition-colors">
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                            {loading ? (
+                                <tr><td colSpan={3} className="text-center py-4 text-gray-500">Carregando...</td></tr>
+                            ) : filteredBrands.length === 0 ? (
+                                <tr><td colSpan={3} className="text-center py-4 text-gray-500">Nenhuma marca encontrada.</td></tr>
+                            ) : (
+                                filteredBrands.map((b) => (
+                                    <tr key={b.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                        <td className="py-3 px-4 text-gray-800 dark:text-gray-200 font-medium">{b.name}</td>
+                                        <td className="py-3 px-4 text-center">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${b.active
+                                                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                                }`}>
+                                                {b.active ? 'Ativa' : 'Inativa'}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {/* Edit not implemented in this simplified list, would ideally open modal or navigate */}
+                                                <button
+                                                    onClick={() => handleDelete(b.id)}
+                                                    className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>

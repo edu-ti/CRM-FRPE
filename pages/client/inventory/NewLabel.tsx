@@ -1,9 +1,36 @@
-import React from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { db, auth, appId } from '../../../../lib/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 
 const NewLabel = () => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        color: '#000000',
+        description: ''
+    });
+
+    const handleSave = async () => {
+        if (!formData.name) {
+            alert("Nome é obrigatório");
+            return;
+        }
+        if (!auth.currentUser) return;
+        setLoading(true);
+
+        try {
+            await addDoc(collection(db, "artifacts", appId, "users", auth.currentUser.uid, "inventory_labels"), formData);
+            navigate(-1);
+        } catch (error) {
+            console.error("Error saving label:", error);
+            alert("Erro ao salvar etiqueta.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="p-6 space-y-6">
@@ -27,8 +54,12 @@ const NewLabel = () => {
                     >
                         Cancelar
                     </button>
-                    <button className="px-4 py-2 bg-[#6C63FF] hover:bg-[#5a52d5] text-white rounded-lg flex items-center gap-2 transition-colors">
-                        <Save size={20} />
+                    <button
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="px-4 py-2 bg-[#6C63FF] hover:bg-[#5a52d5] text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                    >
+                        {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
                         Salvar
                     </button>
                 </div>
@@ -38,17 +69,33 @@ const NewLabel = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Etiqueta *</label>
-                        <input type="text" placeholder="Ex: Promoção, Queima de Estoque" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white" />
+                        <input
+                            type="text"
+                            placeholder="Ex: Promoção, Queima de Estoque"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white"
+                        />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cor</label>
-                        <input type="color" className="w-full h-10 p-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer" />
+                        <input
+                            type="color"
+                            value={formData.color}
+                            onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                            className="w-full h-10 p-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg cursor-pointer"
+                        />
                     </div>
 
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
-                        <input type="text" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white" />
+                        <input
+                            type="text"
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white"
+                        />
                     </div>
                 </div>
             </div>

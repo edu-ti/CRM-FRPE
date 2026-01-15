@@ -1,9 +1,43 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { db, auth, appId } from '../../../../lib/firebase';
+import { collection, addDoc, onSnapshot } from 'firebase/firestore';
+
+interface PriceTable {
+    id: string;
+    name: string;
+}
 
 const NewProductCatalog = () => {
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(false);
+    const [priceTables, setPriceTables] = useState<PriceTable[]>([]);
+    const [formData, setFormData] = useState({
+        name: '',
+        priceTable: '',
+        hidePrice: false,
+        active: true
+    });
+
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const unsubscribe = onSnapshot(collection(db, "artifacts", appId, "users", auth.currentUser.uid, "inventory_price_tables"), snap => {
+            setPriceTables(snap.docs.map(d => ({ id: d.id, ...d.data() } as PriceTable)));
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleSave = async () => {
+        if (!formData.name) { alert("Nome obrigatório"); return; }
+        if (!auth.currentUser) return;
+        setLoading(true);
+        try {
+            await addDoc(collection(db, "artifacts", appId, "users", auth.currentUser.uid, "inventory_catalogs"), formData);
+            navigate(-1);
+        } catch (e) { console.error(e); alert("Erro salvar"); }
+        finally { setLoading(false); }
+    }
 
     return (
         <div className="p-6 space-y-6">
@@ -16,8 +50,8 @@ const NewProductCatalog = () => {
                         <ArrowLeft size={24} />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Cadastro de Catálogo</h1>
-                        <p className="text-gray-500 dark:text-gray-400">Crie um novo catálogo de produtos</p>
+                        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Novo Catálogo</h1>
+                        <p className="text-gray-500 dark:text-gray-400">Configure um novo catálogo de produtos</p>
                     </div>
                 </div>
                 <div className="flex gap-3">
@@ -27,9 +61,13 @@ const NewProductCatalog = () => {
                     >
                         Cancelar
                     </button>
-                    <button className="px-4 py-2 bg-[#6C63FF] hover:bg-[#5a52d5] text-white rounded-lg flex items-center gap-2 transition-colors">
-                        <Save size={20} />
-                        Salvar Catálogo
+                    <button
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="px-4 py-2 bg-[#6C63FF] hover:bg-[#5a52d5] text-white rounded-lg flex items-center gap-2 transition-colors disabled:opacity-50"
+                    >
+                        {loading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                        Salvar
                     </button>
                 </div>
             </div>
@@ -37,50 +75,48 @@ const NewProductCatalog = () => {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Empresa *</label>
-                        <input type="text" value="BEMED ATACADISTA" readOnly className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 cursor-not-allowed" />
-                    </div>
-
-                    <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Catálogo *</label>
-                        <input type="text" className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white" />
+                        <input
+                            type="text"
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white"
+                        />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Depósito *</label>
-                        <select className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tabela de Preço</label>
+                        <select
+                            value={formData.priceTable}
+                            onChange={e => setFormData({ ...formData, priceTable: e.target.value })}
+                            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white"
+                        >
                             <option value="">Selecione...</option>
-                            <option value="padrao">Padrão</option>
-                            <option value="filial">Filial</option>
+                            {priceTables.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                         </select>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tabela de Preço *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filtrar por Categoria</label>
                         <select className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white">
-                            <option value="">Selecione...</option>
-                            <option value="distribuidor">Distribuidor</option>
-                            <option value="varejo">Varejo</option>
+                            <option value="">Todas</option>
                         </select>
                     </div>
 
-                    <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoria (Opcional)</label>
-                        <select className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#6C63FF] dark:text-white">
-                            <option value="">Selecione para filtrar produtos...</option>
-                            <option value="odonto">Odonto</option>
-                            <option value="medico">Médico</option>
-                        </select>
-                    </div>
-
-                    <div className="md:col-span-2 flex items-center gap-6 mt-4">
+                    <div className="md:col-span-2 space-y-3 mt-2">
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="rounded border-gray-300 text-[#6C63FF] focus:ring-[#6C63FF]" />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Exibir apenas itens com saldo em estoque</span>
+                            <input
+                                type="checkbox"
+                                className="rounded border-gray-300 text-[#6C63FF] focus:ring-[#6C63FF]"
+                                checked={formData.hidePrice}
+                                onChange={e => setFormData({ ...formData, hidePrice: e.target.checked })}
+                            />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Ocultar preços dos produtos</span>
                         </label>
+
                         <label className="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" className="rounded border-gray-300 text-[#6C63FF] focus:ring-[#6C63FF]" />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Ocultar Preço</span>
+                            <input type="checkbox" className="rounded border-gray-300 text-[#6C63FF] focus:ring-[#6C63FF]" defaultChecked />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">Apenas produtos com estoque</span>
                         </label>
                     </div>
                 </div>

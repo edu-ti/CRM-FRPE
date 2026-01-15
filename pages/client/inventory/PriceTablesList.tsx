@@ -1,17 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { db, auth, appId } from '../../../../lib/firebase';
+import { collection, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+
+interface PriceTable {
+    id: string;
+    name: string;
+    type: string;
+    variation: string;
+    active: boolean;
+}
 
 const PriceTablesList = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [tables, setTables] = useState<PriceTable[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock data
-    const tables = [
-        { id: 1, name: 'Tabela Padrão (Varejo)', type: 'Base', variation: '0%', active: true },
-        { id: 2, name: 'Atacado', type: 'Derivada', variation: '-15%', active: true },
-        { id: 3, name: 'Parceiro A', type: 'Derivada', variation: '-10%', active: true },
-        { id: 4, name: 'E-commerce', type: 'Derivada', variation: '0%', active: true },
-    ];
+    useEffect(() => {
+        if (!auth.currentUser) return;
+        const uid = auth.currentUser.uid;
+        const unsubscribe = onSnapshot(collection(db, "artifacts", appId, "users", uid, "inventory_price_tables"), snap => {
+            setTables(snap.docs.map(d => ({ id: d.id, ...d.data() } as PriceTable)));
+            setLoading(false);
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const handleDelete = async (id: string) => {
+        if (!auth.currentUser) return;
+        if (confirm("Excluir?")) await deleteDoc(doc(db, "artifacts", appId, "users", auth.currentUser.uid, "inventory_price_tables", id));
+    };
+
+    const filtered = tables.filter(t => t.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
         <div className="p-6 space-y-6">
@@ -55,12 +76,14 @@ const PriceTablesList = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                            {tables.map((t) => (
+                            {loading && <tr><td colSpan={5} className="text-center py-4">Carregando...</td></tr>}
+                            {!loading && filtered.length === 0 && <tr><td colSpan={5} className="text-center py-4">Nenhum registro.</td></tr>}
+                            {filtered.map((t) => (
                                 <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                     <td className="py-3 px-4 text-gray-800 dark:text-gray-200 font-medium">{t.name}</td>
                                     <td className="py-3 px-4 text-gray-600 dark:text-gray-300">{t.type}</td>
                                     <td className="py-3 px-4 text-gray-600 dark:text-gray-300">
-                                        <span className={`font-mono ${t.variation.includes('-') ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'}`}>
+                                        <span className={`font-mono ${t.variation?.includes?.('-') ? 'text-green-600' : 'text-gray-600 dark:text-gray-300'}`}>
                                             {t.variation}
                                         </span>
                                     </td>
@@ -77,7 +100,7 @@ const PriceTablesList = () => {
                                             <button className="p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 transition-colors">
                                                 <Edit2 size={16} />
                                             </button>
-                                            <button className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 transition-colors">
+                                            <button onClick={() => handleDelete(t.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 transition-colors">
                                                 <Trash2 size={16} />
                                             </button>
                                         </div>
