@@ -867,6 +867,7 @@ const App = () => {
 
                   <Route path="inventory/brands" element={<BrandsList />} />
                   <Route path="inventory/new-brand" element={<NewBrand />} />
+                  <Route path="inventory/orders-simulator" element={<OrdersSimulator />} />
                   <Route path="inventory/sizes" element={<SizesList />} />
                   <Route path="inventory/new-size" element={<NewSize />} />
                   <Route path="inventory/units" element={<UnitsList />} />
